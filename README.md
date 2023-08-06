@@ -1,1 +1,1 @@
-# react-nextjs-tutorial
+# nextjs-tutorial
