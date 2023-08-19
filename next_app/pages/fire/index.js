@@ -1,37 +1,55 @@
 import {useState, useEffect} from 'react'
 import Layout from '../../components/layout'
-import { getFirestore, collection, getDocs } from 'firebase/firestore';
+import { getAuth, signInWithPopup, GoogleAuthProvider } from "firebase/auth";
+import { getFirestore, collection, getDocs, query, where } from 'firebase/firestore';
 import '../../components/fire'
 
 const db = getFirestore()
+const auth = getAuth();
+const provider = new GoogleAuthProvider();
+
+auth.signOut() //☆ログアウトする
 
 export default function Home() {
   const mydata = []
   const [data, setData] = useState(mydata)
   const [message, setMessage] = useState('wait...')
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const myDataCollection = collection(db, 'mydata');
-      const dataSnapshot = await getDocs(myDataCollection);
-      dataSnapshot.forEach((document) => {
-        const doc = document.data()
-        mydata.push(
-          <tr key={document.id}>
-            <td><a href={'/fire/del?id=' + document.id}>
-                {document.id}</a></td>
-            <td>{doc.name}</td>
-            <td>{doc.mail}</td>
-            <td>{doc.age}</td>
-          </tr>
-        )
-      })
-      setData(mydata)
-      setMessage('Firebase data.')
-    };
+  const fetchData = async () => {
+    const dataSnapshot = await getDocs(collection(db, 'mydata'));
+    dataSnapshot.forEach((document)=> {
+      const doc = document.data()
+      mydata.push(
+        <tr key={document.id}>
+          <td><a href={'/fire/del?id=' + document.id}>
+              {document.id}</a></td>
+          <td>{doc.name}</td>
+          <td>{doc.mail}</td>
+          <td>{doc.age}</td>
+        </tr>
+      )
+    })
+    setData(mydata)
+  }
 
-    fetchData();
-  }, [])
+  useEffect(() => {
+    signInWithPopup(auth, provider).then(result=> {
+      setMessage('logined: ' + result.user.displayName)
+    }).catch((error) => {
+      setMessage('not logined.')
+    })
+  },[])
+
+  useEffect(() => {
+    console.log(auth.currentUser != null)
+    if (auth.currentUser != null) {
+      fetchData();
+    } else {
+      mydata.push(
+        <tr key="1"><th colSpan="4">can't get data.</th></tr>
+      )
+    }
+  }, [message])
 
   return (
     <div>

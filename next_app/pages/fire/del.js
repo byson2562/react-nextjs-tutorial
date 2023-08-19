@@ -1,33 +1,33 @@
 import {useState, useEffect} from 'react'
 import Layout from '../../components/layout'
-import { getFirestore, collection, deleteDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, deleteDoc } from 'firebase/firestore';
 import { useRouter } from 'next/router'
 import '../../components/fire'
 
 const db = getFirestore()
 
-export default function Delete(props) {
+export default function Delete() {
   const [message, setMessage] = useState('wait.')
   const [data, setData] = useState(null)
   const router = useRouter()
-  
+  console.log(router.query.id)
+
+  const fetchData = async () => {
+    const documentRef = doc(db, 'mydata', router.query.id);
+    const documentSnapshot = await getDoc(documentRef);      
+    setMessage('Delete id = ' + router.query.id)
+    setData(documentSnapshot.data())
+  }
+
   useEffect(() => {
-    const fetchDocument = async () => {
-      if (router.query.id != undefined) {
-        const documentRef = doc(db, 'mydata', '1');
-        const documentSnapshot = await getDoc(documentRef);
-        const doc = documentSnapshot.data()
-        setMessage('Delete id = ' + router.query.id)
-        setData(doc)
-      } else {
-        setMessage(message + '.')
-      }
-    };
-  }, [message])
+    console.log(router.query.id)
+    if (router.query && router.query.id) {
+      fetchData();
+    }
+  }, [router.query.id])
 
   const doAction = async (e)=> {
-    const myDataCollection = collection(db, 'mydata');
-    const documentRef = doc(myDataCollection, 'mydata', router.query.id);
+    const documentRef = doc(db, 'mydata', router.query.id);
     await deleteDoc(documentRef);
     router.push('/fire')
   }
